@@ -1,0 +1,825 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>揮棒實驗室-江蘇駿馬隊打擊影片分析</title>
+<style>
+:root{--bg:#06111a;--bg2:#0a1822;--panel:#0d1c27;--panel2:#10222f;--line:#1c3340;--line2:#244556;--text:#e6f1f7;--muted:#7f98a8;--cyan:#39d4ff;--cyan2:#1aa6cc;--orange:#ff9b4a;--red:#ff5c7a;--amber:#ffc24d;--green:#3fd68f;--mono:"Cascadia Mono","Consolas",monospace}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI","Noto Sans TC","Microsoft JhengHei",sans-serif;line-height:1.55}
+body{background:radial-gradient(1200px 600px at 20% -10%,#0d2634 0,var(--bg) 60%)}
+button,input,select{font:inherit;color:inherit}
+button{background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:7px 12px;cursor:pointer;color:var(--text)}
+button:hover{border-color:var(--cyan2)}button:disabled{opacity:.4;cursor:not-allowed}
+button.on{border-color:var(--cyan);color:var(--cyan);background:#0c2a38}
+button.primary{background:var(--cyan);border-color:var(--cyan);color:#03202c;font-weight:700}
+button.primary:hover{background:#6ae0ff}
+a{color:var(--cyan)}
+.wrap{max-width:1480px;margin:0 auto;padding:22px 20px 80px}
+.mono{font-family:var(--mono)}
+.meta{font-family:var(--mono);font-size:12px;color:var(--muted);letter-spacing:.08em;display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.meta b{color:var(--cyan);font-weight:600}
+h1{font-size:46px;line-height:1.05;margin:8px 0 10px;font-weight:800;letter-spacing:.02em}
+h1 .accent{color:var(--cyan);display:block}
+h2{font-size:22px;margin:38px 0 6px}
+h3{font-size:15px;margin:0}
+.lead{max-width:860px;color:#c7d8e2;margin:0 0 12px;font-size:15px}
+.lead b{color:var(--text)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 16px}
+.chip{font-family:var(--mono);font-size:12px;padding:4px 10px;border-radius:999px;border:1px solid var(--line2);color:var(--muted)}
+.chip.red{border-color:#6b2434;color:var(--red)}.chip.amber{border-color:#6a5220;color:var(--amber)}.chip.green{border-color:#1f5a3c;color:var(--green)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.subtle{color:var(--muted);font-size:13px}
+.hidden{display:none!important}
+/* uploader */
+.uploader{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}
+.drop{border:1px dashed var(--line2);border-radius:12px;padding:16px;background:var(--panel);min-height:150px;display:flex;flex-direction:column;gap:8px}
+.drop.best{border-top:3px solid var(--cyan)}.drop.cur{border-top:3px solid var(--orange)}
+.drop.hover{border-color:var(--cyan);background:#0d2230}
+.drop .row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.drop label.file{display:inline-flex}.drop label.file input{display:none}
+.drop .info{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.drop video{width:100%;max-height:200px;background:#000;border-radius:8px;display:none}
+.drop.has video{display:block}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.toolbar select{background:var(--panel2);border:1px solid var(--line2);border-radius:8px;padding:7px 10px}
+.status{margin-top:12px;border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:12px 14px}
+.status.err{border-color:var(--red)}.status.ok{border-color:var(--green)}
+.steps{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.step{font-family:var(--mono);font-size:12px;padding:3px 9px;border-radius:999px;border:1px solid var(--line2);color:var(--muted)}
+.step.doing{border-color:var(--cyan);color:var(--cyan)}.step.done{border-color:var(--green);color:var(--green)}
+.bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;width:0;background:var(--cyan)}
+/* stage */
+.stage-grid{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:14px;margin-top:16px}
+.stage{position:relative;background:#050d14;border:1px solid var(--line2);border-radius:12px;overflow:hidden;height:640px}
+.stage canvas{display:block;width:100%;height:100%}
+.stage .corner{position:absolute;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.1em}
+.stage .tl{left:14px;top:12px}.stage .tr{right:14px;top:12px;text-align:right}
+.stage .tr b{display:block;font-size:22px;color:var(--text);letter-spacing:.05em}
+.stage .phaseTag{position:absolute;left:50%;top:12px;transform:translateX(-50%);font-family:var(--mono);font-size:12px;color:var(--amber);letter-spacing:.2em;border-bottom:1px solid var(--amber);padding-bottom:3px}
+.readout{position:absolute;left:14px;top:40px;font-family:var(--mono);font-size:12px;border-collapse:collapse}
+.readout td{padding:1px 8px 1px 0;color:var(--muted)}.readout td.b{color:var(--cyan)}.readout td.c{color:var(--orange)}.readout th{font-weight:400;color:var(--muted);text-align:left;padding:0 8px 2px 0}
+.legend{position:absolute;left:14px;bottom:12px;display:flex;gap:16px;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:14px;height:2px;vertical-align:middle;margin-right:6px}
+.tempo{position:absolute;right:14px;bottom:12px;font-family:var(--mono);font-size:11px;color:var(--muted);width:280px}
+.tempo .seg{display:flex;height:5px;border-radius:3px;overflow:hidden;margin-top:4px}.tempo .seg i{display:block;height:100%}
+.side{display:flex;flex-direction:column;gap:14px}
+.video-card .title{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--muted);margin-bottom:8px}
+.vwrap{position:relative;background:#000;border-radius:8px;overflow:hidden;aspect-ratio:9/12}
+.vwrap video,.vwrap canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.vwrap canvas{pointer-events:none}
+.vwrap .track{position:absolute;left:8px;top:8px;font-family:var(--mono);font-size:10px;color:var(--red);letter-spacing:.2em}
+.vtabs{display:flex;gap:6px;margin-top:8px}.vtabs button{flex:1;padding:5px}
+.keynums{margin-top:14px}
+.keynums .title{font-family:var(--mono);font-size:12px;letter-spacing:.08em}
+#keyNums{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:10px}
+#keyNums .kn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+#keyNums .kn span.lbl{display:block;color:var(--muted);font-size:12px;margin-bottom:4px}
+#keyNums .kn b{font-family:var(--mono);font-size:16px;font-weight:400}
+#keyNums .b{color:var(--cyan)}#keyNums .c{color:var(--orange)}#keyNums .red{color:var(--red)}#keyNums .amber{color:var(--amber)}#keyNums .green{color:var(--green)}
+/* transport */
+.transport{margin-top:14px}
+.ptrack{position:relative;height:34px;margin:4px 0 10px;user-select:none;cursor:pointer}
+.ptrack .segs{position:absolute;left:0;right:0;top:12px;height:10px;display:flex;border-radius:3px;overflow:hidden}
+.ptrack .segs div{position:absolute;top:0;height:100%;font-family:var(--mono);font-size:10px;color:#dff5ff;padding-left:5px;line-height:10px;white-space:nowrap;overflow:hidden}
+.ptrack .mk{position:absolute;top:4px;width:2px;height:26px;background:var(--amber)}
+.ptrack .mk span{position:absolute;top:26px;left:-20px;width:42px;text-align:center;font-family:var(--mono);font-size:10px;color:var(--amber)}
+.ptrack .mk.b{background:var(--cyan);height:8px;top:2px}
+.ptrack .head{position:absolute;top:0;width:2px;height:34px;background:#fff}
+.trow{display:flex;gap:18px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.trow .grp{display:flex;gap:6px;align-items:center}.trow .grp span{font-family:var(--mono);font-size:11px;color:var(--muted);margin-right:4px;letter-spacing:.1em}
+.trow .grp button{padding:5px 10px;font-size:13px}
+/* contact check */
+.contact{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:14px}
+.cc{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:12px}
+.cc .ccwrap{position:relative;background:#000;border-radius:8px;overflow:hidden;aspect-ratio:16/10}
+.cc .ccwrap canvas{position:absolute;inset:0;width:100%;height:100%}
+.cc .ccrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px}
+.cc input[type=range]{width:100%;margin-top:8px}
+.cc .state{font-family:var(--mono);font-size:12px}.cc .state.ok{color:var(--green)}.cc .state.warn{color:var(--amber)}
+/* findings */
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.fcard{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.fcard .ft{display:flex;justify-content:space-between;align-items:center}
+.fcard .tag{font-size:11px;padding:2px 8px;border-radius:5px;font-family:var(--mono)}
+.tag.red{background:#3a1420;color:var(--red)}.tag.amber{background:#3a2d12;color:var(--amber)}.tag.green{background:#12352a;color:var(--green)}
+.fcard .big{font-family:var(--mono);font-size:34px;line-height:1;color:var(--red)}.fcard .big small{font-size:12px;color:var(--muted);margin-left:8px;font-family:inherit}
+.fcard .big.amber{color:var(--amber)}
+.fcard p{margin:0;font-size:14px;color:#cfdde6}
+.fcard .kv{display:grid;grid-template-columns:34px 1fr;gap:6px;font-size:13px}.fcard .kv b{font-family:var(--mono);color:var(--cyan);font-weight:400;font-size:12px}
+.fcard button{align-self:flex-start;font-size:13px}
+.good{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.good div{border-top:2px solid var(--green);padding-top:8px}.good h3{color:var(--green);margin-bottom:4px}.good p{margin:0;font-size:13px;color:#cfdde6}
+table.phase{width:100%;border-collapse:collapse;font-size:13px;font-family:var(--mono)}
+table.phase th,table.phase td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+table.phase th{color:var(--muted);font-weight:400}table.phase td:first-child,table.phase th:first-child{text-align:left;font-family:inherit}
+table.phase .b{color:var(--cyan)}table.phase .c{color:var(--orange)}table.phase .red{color:var(--red)}table.phase .amber{color:var(--amber)}table.phase .green{color:var(--green)}
+.tl{width:100%;height:230px;background:var(--panel2);border:1px solid var(--line);border-radius:8px}
+.quality{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.quality div{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px}.quality span{display:block;color:var(--muted);font-size:12px}.quality b{font-family:var(--mono);font-size:20px;font-weight:400}
+.limits{color:var(--muted);font-size:13px;padding-left:18px;margin:8px 0 0}
+@media(max-width:1100px){.stage-grid{grid-template-columns:1fr}.stage{height:480px}.cards3,.good{grid-template-columns:1fr}.uploader,.contact{grid-template-columns:1fr}h1{font-size:34px}.quality{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="meta" id="metaLine"><span>SWING LAB</span><span>棒球</span><span>Blast 影片</span><span>尚未載入影片</span></div>
+    <h1>揮棒實驗室-江蘇駿馬隊<span class="accent" id="h1sub">一棒拆解</span></h1>
+    <p class="lead" id="lead">上傳兩支揮棒影片：<b>最佳那球</b>（青色，當成你的矯正版）和<b>目前這球</b>（橘色）。程式會在你的電腦內一格一格看完影片，抓出身上 33 個關節點，重建估計的 3D 人形，自動找出著地、啟動、擊球、收尾，並告訴你哪裡跟最佳那球不一樣。影片不會上傳到任何伺服器。</p>
+    <div class="chips" id="chips"></div>
+  </header>
+
+  <section id="setup">
+    <div class="uploader">
+      <div class="drop best" id="dropBest">
+        <div class="row"><h3>最佳揮棒 · 青色（矯正版）</h3><label class="file"><button type="button" onclick="this.parentNode.querySelector('input').click()">選擇影片</button><input type="file" accept="video/*" data-slot="best"></label></div>
+        <div class="info" id="infoBest">拖曳影片到這裡，或選擇檔案。建議：單次完整揮棒、固定機位、全身入鏡。</div>
+        <video id="prevBest" muted playsinline controls></video>
+      </div>
+      <div class="drop cur" id="dropCur">
+        <div class="row"><h3>目前揮棒 · 橘色（球員）</h3><label class="file"><button type="button" onclick="this.parentNode.querySelector('input').click()">選擇影片</button><input type="file" accept="video/*" data-slot="cur"></label></div>
+        <div class="info" id="infoCur">機位、距離、慢動作倍率盡量跟最佳那支相同。</div>
+        <video id="prevCur" muted playsinline controls></video>
+      </div>
+    </div>
+    <div class="toolbar">
+      <label>打者 <select id="sideSel"><option value="auto">自動判斷</option><option value="right">右打</option><option value="left">左打</option></select></label>
+      <label>模型 <select id="modelSel"><option value="full">標準（建議）</option><option value="lite">快速</option><option value="heavy">精細（慢）</option></select></label>
+      <button class="primary" id="runBtn" disabled>開始分析</button>
+      <a href="numbers.html" class="subtle" style="margin-left:auto">Blast 數字比較 →</a>
+    </div>
+    <div class="status" id="status">
+      <div class="steps"><span class="step" data-step="0">1 偵測影格率</span><span class="step" data-step="1">2 逐格抓關節</span><span class="step" data-step="2">3 判斷階段</span><span class="step" data-step="3">4 兩球比對</span></div>
+      <div id="statusText">等待影片。第一次分析會從網路載入人體姿態模型（約 10 MB）。</div>
+      <div class="bar"><i id="barFill"></i></div>
+    </div>
+  </section>
+
+  <section id="lab" class="hidden">
+    <div class="stage-grid">
+      <div class="stage" id="stage">
+        <canvas id="stageCanvas"></canvas>
+        <div class="phaseTag" id="phaseTag">擊球</div>
+        <div class="corner tr" id="cornerTR"><b>擊球</b><span id="cornerTime">0:00.00 · F0</span></div>
+        <table class="readout" id="readout"></table>
+        <div class="legend"><span><i style="background:var(--orange)"></i>目前（你）</span><span><i style="background:var(--cyan)"></i>最佳（矯正版）</span><span><i style="background:var(--red)"></i>出問題的部位</span></div>
+        <div class="tempo" id="tempo"></div>
+      </div>
+      <aside class="side">
+        <div class="card video-card">
+          <div class="title"><span>原始影片 · 骨架疊圖</span><span id="vTime">0:00.00</span></div>
+          <div class="vwrap" id="vwrapCur"><video id="vidCur" muted playsinline></video><canvas id="ovCur"></canvas><span class="track">● TRACKING</span></div>
+          <div class="vwrap hidden" id="vwrapBest"><video id="vidBest" muted playsinline></video><canvas id="ovBest"></canvas><span class="track" style="color:var(--cyan)">● TRACKING</span></div>
+          <div class="vtabs"><button class="on" data-vtab="cur">目前</button><button data-vtab="best">最佳</button></div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="card transport">
+      <div class="ptrack" id="ptrack"><div class="segs" id="segs"></div><div class="head" id="phead"></div></div>
+      <div class="trow">
+        <div class="grp"><button id="playBtn" class="primary">▶ 播放</button></div>
+        <div class="grp"><span>速度</span><button data-rate="0.25">0.25×</button><button data-rate="0.5" class="on">0.5×</button><button data-rate="1">1×</button></div>
+        <div class="grp"><span>顯示</span><button data-disp="overlay" class="on">疊在一起</button><button data-disp="side">左右並排</button><button data-disp="cur">只看球員</button><button data-disp="best">只看最佳</button></div>
+        <div class="grp"><span>視角</span><button data-view="image" class="on">原始鏡頭</button><button data-view="camera">正面 3D</button><button data-view="target">投手方向</button><button data-view="top">俯視</button></div>
+        <div class="grp"><span>圖層</span><button data-layer="annot" class="on">定格標註</button><button data-layer="trail">手部軌跡</button><button data-layer="floor" class="on">地面</button></div>
+      </div>
+      <div class="trow">
+        <div class="grp"><span>定格</span><button data-jump="setup">準備</button><button data-jump="plant">著地</button><button data-jump="launch">啟動</button><button data-jump="contact" class="on">擊球</button><button data-jump="finish">收尾</button></div>
+        <div class="grp"><span>逐格</span><button data-stepf="-1">−1 格</button><button data-stepf="1">+1 格</button><span style="margin-left:8px">空白鍵播放／暫停，← → 逐格</span></div>
+      </div>
+    </div>
+
+    <h2>確認擊球幀</h2>
+    <p class="subtle">自動判斷用的是手部速度峰值往後推 0.03 秒，模型看不到球棒和球，所以一定要用逐格確認球棒碰到球的那一格。確認後，所有數字會重新計算。</p>
+    <div class="contact" id="contactUI"></div>
+
+    <div class="card keynums">
+      <div class="title subtle">關鍵數字</div>
+      <p class="subtle" style="margin:4px 0 12px">左邊是最佳（青），右邊是目前（橘）。確認擊球幀後會重算。</p>
+      <div id="keyNums"></div>
+    </div>
+
+    <h2>再進步的三件事</h2>
+    <p class="subtle">依跟最佳那球差距的大小排序。按「看示範 · 定格」會跳到那個時間點並標註。</p>
+    <div class="cards3" id="improve"></div>
+
+    <h2>已經做得很好的</h2>
+    <p class="subtle">這幾個跟最佳那球幾乎一樣，矯正時保留。</p>
+    <div class="good" id="good"></div>
+
+    <h2>各階段數據</h2>
+    <p class="subtle">每格左邊是最佳（青），右邊是目前（橘）。紅字是差距大、黃字是注意、綠字是跟最佳一致。角度用 3D 估計關節算，位移是鏡頭平面的估計值。</p>
+    <div class="card" style="overflow:auto"><table class="phase" id="phaseTable"></table></div>
+
+    <h2>整段時間線</h2>
+    <p class="subtle">以擊球對齊兩支影片。實線：上身側傾；虛線：轉肩；底部填色：動作速度。</p>
+    <canvas id="tlCanvas" class="tl" width="1200" height="230"></canvas>
+
+    <h2>量測品質與限制</h2>
+    <div class="quality" id="quality"></div>
+    <ul class="limits">
+      <li>關節位置來自單一鏡頭的 AI 姿態估計；3D 深度是模型推估的，轉肩／轉髖、俯視圖都標示為估計值。</li>
+      <li>模型不追蹤球棒和球，擊球幀必須人工確認；攻擊角、棒速請以 Blast 感測器為準。</li>
+      <li>兩支影片若機位差很多（高度、距離、角度），位移類數字（頭、跨步）會失真；角度類相對可靠。</li>
+      <li>左右方向不同的影片會自動鏡像對齊；左右打也會自動判斷，可在上方手動改。</li>
+    </ul>
+    <div class="toolbar"><button id="dlBtn">下載文字報告</button><button id="againBtn">換影片重新分析</button></div>
+  </section>
+</div>
+
+<script type="module">
+const V="0.10.22-rc.20250304";
+const CDN=`https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${V}`;
+const MODELS={lite:"pose_landmarker_lite",full:"pose_landmarker_full",heavy:"pose_landmarker_heavy"};
+const J={nose:0,lEar:7,rEar:8,lSh:11,rSh:12,lEl:13,rEl:14,lWr:15,rWr:16,lHip:23,rHip:24,lKnee:25,rKnee:26,lAnk:27,rAnk:28,lHeel:29,rHeel:30,lToe:31,rToe:32};
+const BONES=[[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[27,29],[29,31],[27,31],[28,30],[30,32],[28,32]];
+const KEYJ=[0,11,12,13,14,15,16,23,24,25,26,27,28];
+const C={best:"#39d4ff",cur:"#ff9b4a",red:"#ff5c7a",amber:"#ffc24d",green:"#3fd68f",muted:"#7f98a8",line:"#1c3340"};
+const PH={setup:"準備",plant:"著地",launch:"啟動",contact:"擊球",finish:"收尾"};
+const PH_EN={setup:"SETUP",plant:"PLANT",launch:"LAUNCH",contact:"IMPACT",finish:"FINISH"};
+
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+const deg=r=>r*180/Math.PI;
+const fmt=(v,d=0)=>Number.isFinite(v)?v.toFixed(d):"—";
+const sgn=(v,d=0)=>Number.isFinite(v)?(v>0?"+":v<0?"−":"")+Math.abs(v).toFixed(d):"—";
+const fmtT=s=>{if(!Number.isFinite(s))return"—";const m=Math.floor(s/60);return`${m}:${(s-m*60).toFixed(2).padStart(5,"0")}`};
+const median=a=>{const b=a.filter(Number.isFinite).sort((x,y)=>x-y);return b.length?b[(b.length-1)>>1]:NaN};
+const pctl=(a,p)=>{const b=a.filter(Number.isFinite).sort((x,y)=>x-y);return b.length?b[Math.min(b.length-1,Math.floor(p*b.length))]:NaN};
+const adiff=(a,b)=>{let d=a-b;while(d>180)d-=360;while(d<-180)d+=360;return d};
+const mid=(a,b)=>({x:(a.x+b.x)/2,y:(a.y+b.y)/2,z:((a.z||0)+(b.z||0))/2});
+const ang3=(a,b,c)=>{const ux=a.x-b.x,uy=a.y-b.y,uz=a.z-b.z,vx=c.x-b.x,vy=c.y-b.y,vz=c.z-b.z;const n=Math.hypot(ux,uy,uz)*Math.hypot(vx,vy,vz);return n?deg(Math.acos(clamp((ux*vx+uy*vy+uz*vz)/n,-1,1))):NaN};
+function smooth(arr,win){const h=Math.floor(win/2),o=new Array(arr.length);for(let i=0;i<arr.length;i++){let s=0,n=0;for(let k=-h;k<=h;k++){const v=arr[i+k];if(Number.isFinite(v)){s+=v;n++}}o[i]=n?s/n:NaN}return o}
+function fillGaps(arr,max){const o=arr.slice();let i=0;while(i<o.length){if(Number.isFinite(o[i])){i++;continue}let j=i;while(j<o.length&&!Number.isFinite(o[j]))j++;const a=o[i-1],b=o[j];if(j-i<=max&&Number.isFinite(a)&&Number.isFinite(b))for(let k=i;k<j;k++)o[k]=a+(b-a)*(k-i+1)/(j-i+1);i=j}return o}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+const state={pose:null,modelKey:null,tsBase:0,best:mkSlot("best"),cur:mkSlot("cur"),t:0,playing:false,rate:.5,disp:"overlay",view:"image",layers:{annot:true,trail:false,floor:true},vtab:"cur",win:[-1.2,.6],findings:[],good:[],ready:false,lastTick:0};
+window.swingLab=state; // 方便在 DevTools 檢查資料
+function mkSlot(id){return{id,file:null,url:null,fps:30,dur:0,w:0,h:0,stride:1,frames:[],mPerPx:1,mirror:false,leadLeft:true,rotSign:1,ev:{},auto:{},confirmed:false,quality:{},video:null,ov:null,scrub:null,scrubCanvas:null,scrubIdx:0}}
+
+/* ---------- upload ---------- */
+for(const s of ["best","cur"]){
+  const slot=state[s],drop=$(s==="best"?"#dropBest":"#dropCur");
+  slot.video=$(s==="best"?"#vidBest":"#vidCur");slot.ov=$(s==="best"?"#ovBest":"#ovCur");slot.preview=$(s==="best"?"#prevBest":"#prevCur");
+  drop.querySelector("input").addEventListener("change",e=>e.target.files[0]&&attach(slot,e.target.files[0]));
+  drop.addEventListener("dragover",e=>{e.preventDefault();drop.classList.add("hover")});
+  drop.addEventListener("dragleave",()=>drop.classList.remove("hover"));
+  drop.addEventListener("drop",e=>{e.preventDefault();drop.classList.remove("hover");const f=e.dataTransfer.files[0];if(f&&f.type.startsWith("video/"))attach(slot,f)});
+}
+async function attach(slot,file){
+  if(slot.url)URL.revokeObjectURL(slot.url);
+  slot.file=file;slot.url=URL.createObjectURL(file);slot.frames=[];slot.confirmed=false;
+  const drop=$(slot.id==="best"?"#dropBest":"#dropCur");drop.classList.add("has");
+  slot.preview.src=slot.url;
+  await loadMeta(slot.preview);
+  slot.dur=slot.preview.duration;slot.w=slot.preview.videoWidth;slot.h=slot.preview.videoHeight;
+  $(slot.id==="best"?"#infoBest":"#infoCur").textContent=`${file.name} · ${slot.w}×${slot.h} · ${slot.dur.toFixed(2)} 秒 · ${(file.size/1048576).toFixed(1)} MB`;
+  $("#runBtn").disabled=!(state.best.file&&state.cur.file);
+}
+function loadMeta(v){return new Promise(res=>{const ok=()=>{if(v.duration===Infinity){v.currentTime=1e9;v.addEventListener("durationchange",()=>{v.currentTime=0;res()},{once:true})}else res()};if(v.readyState>=1)ok();else v.addEventListener("loadedmetadata",ok,{once:true})})}
+
+/* ---------- status ---------- */
+function setStep(i,text,p){$$(".step").forEach((el,k)=>{el.classList.toggle("done",k<i);el.classList.toggle("doing",k===i)});if(text!=null)$("#statusText").textContent=text;if(p!=null)$("#barFill").style.width=p+"%"}
+function statusErr(text){$("#status").classList.add("err");$("#statusText").textContent=text}
+
+/* ---------- model ---------- */
+async function loadModel(){
+  const key=$("#modelSel").value;
+  if(state.pose&&state.modelKey===key)return state.pose;
+  if(state.pose){state.pose.close();state.pose=null}
+  setStep(0,`載入人體姿態模型（${key}）…`,2);
+  const vision=await import(`${CDN}/+esm`);
+  const fs=await vision.FilesetResolver.forVisionTasks(`${CDN}/wasm`);
+  const path=`https://storage.googleapis.com/mediapipe-models/pose_landmarker/${MODELS[key]}/float16/latest/${MODELS[key]}.task`;
+  const opts=d=>({baseOptions:{modelAssetPath:path,delegate:d},runningMode:"VIDEO",numPoses:1,minPoseDetectionConfidence:.4,minPosePresenceConfidence:.4,minTrackingConfidence:.3});
+  try{state.pose=await vision.PoseLandmarker.createFromOptions(fs,opts("GPU"))}catch(e){console.warn("GPU 失敗，改用 CPU",e);state.pose=await vision.PoseLandmarker.createFromOptions(fs,opts("CPU"))}
+  state.modelKey=key;state.tsBase=0;return state.pose;
+}
+
+/* ---------- video helpers ---------- */
+function seekTo(v,t){
+  t=clamp(t,0,Math.max(0,(Number.isFinite(v.duration)?v.duration:t)-.001));
+  if(Math.abs(v.currentTime-t)<.0004&&v.readyState>=2)return Promise.resolve();
+  return new Promise(res=>{
+    let done=false;const fin=()=>{if(done)return;done=true;v.removeEventListener("seeked",fin);res()};
+    v.addEventListener("seeked",fin);
+    if(v.requestVideoFrameCallback)v.requestVideoFrameCallback(()=>fin());
+    v.currentTime=t;setTimeout(fin,400);
+  });
+}
+async function estimateFps(v){
+  if(!v.requestVideoFrameCallback)return 30;
+  const times=[];v.muted=true;v.playbackRate=1;
+  await seekTo(v,Math.min(.4,v.duration*.1));
+  await new Promise(res=>{
+    const stop=()=>{v.pause();res()};const timer=setTimeout(stop,2500);
+    const cb=(now,meta)=>{times.push(meta.mediaTime);if(times.length>=40){clearTimeout(timer);stop()}else v.requestVideoFrameCallback(cb)};
+    v.requestVideoFrameCallback(cb);v.play().catch(()=>{clearTimeout(timer);stop()});
+  });
+  const d=[];for(let i=1;i<times.length;i++){const x=times[i]-times[i-1];if(x>.002&&x<.5)d.push(x)}
+  if(d.length<5)return 30;
+  const fps=1/median(d);const common=[23.976,24,25,29.97,30,48,50,59.94,60,90,120,240];
+  for(const c of common)if(Math.abs(fps-c)/c<.06)return Math.round(c);
+  return clamp(Math.round(fps),10,240);
+}
+
+/* ---------- analysis ---------- */
+$("#runBtn").addEventListener("click",run);
+$("#againBtn").addEventListener("click",()=>{stopPlay();state.ready=false;$("#lab").classList.add("hidden");$("#setup").classList.remove("hidden");window.scrollTo({top:0,behavior:"smooth"})});
+async function run(){
+  $("#runBtn").disabled=true;$("#status").classList.remove("err","ok");
+  try{
+    await loadModel();
+    for(const s of ["best","cur"]){const slot=state[s];slot.video.src=slot.url;await loadMeta(slot.video);await extract(slot)}
+    setStep(2,"判斷階段…",92);await sleep(10);
+    for(const s of ["best","cur"])detectEvents(state[s],true);
+    alignHandedness();
+    for(const s of ["best","cur"]){computeMetrics(state[s]);detectStride(state[s]);finalizeSlot(state[s])}
+    setStep(3,"兩球比對…",97);await sleep(10);
+    buildUI();
+    setStep(4,"完成。請先到「確認擊球幀」逐格確認球棒碰球的畫面。",100);$("#status").classList.add("ok");
+    $("#setup").classList.add("hidden");$("#lab").classList.remove("hidden");
+    state.ready=true;resize();jumpTo("contact");for(const s of ["best","cur"])drawScrub(state[s]);
+  }catch(e){console.error(e);statusErr("分析中斷："+(e.message||e))}
+  finally{$("#runBtn").disabled=false}
+}
+async function extract(slot){
+  const v=slot.video;v.pause();
+  setStep(0,`偵測「${slot.file.name}」影格率…`,4);
+  slot.fps=await estimateFps(v);slot.dur=v.duration;slot.w=v.videoWidth;slot.h=v.videoHeight;
+  const total=Math.floor(slot.dur*slot.fps);slot.stride=Math.max(1,Math.ceil(total/720));
+  const n=Math.floor(total/slot.stride);slot.frames=[];
+  const t0=performance.now();
+  for(let i=0;i<n;i++){
+    const t=(i*slot.stride+.5)/slot.fps;if(t>=slot.dur)break;
+    await seekTo(v,t);
+    const ts=state.tsBase+Math.round(t*1000);
+    let r=null;try{r=state.pose.detectForVideo(v,ts)}catch(e){console.warn(e)}
+    const lm=r?.landmarks?.[0],wl=r?.worldLandmarks?.[0];
+    slot.frames.push({i,t,lm:lm?lm.map(p=>({x:p.x,y:p.y,z:p.z,v:p.visibility??1})):null,wl:wl?wl.map(p=>({x:p.x,y:p.y,z:p.z})):null,m:null});
+    if(i%4===0){const el=(performance.now()-t0)/1000,eta=el/(i+1)*(n-i-1);setStep(1,`逐格抓關節「${slot.file.name}」 第 ${i+1} / ${n} 格 · ${slot.fps} fps · 剩約 ${Math.ceil(eta)} 秒`,4+86*((slot.id==="best"?0:.5)+.5*(i+1)/n));await sleep(0)}
+  }
+  state.tsBase+=Math.round(slot.dur*1000)+2000;
+  const det=slot.frames.filter(f=>f.lm).length;
+  if(det<slot.frames.length*.3||det<8)throw new Error(`「${slot.file.name}」能辨識到人的畫面太少（${det}/${slot.frames.length}）。請確認全身入鏡、光線足夠。`);
+  const ratios=slot.frames.filter(f=>f.lm&&f.wl).map(f=>{const a=f.lm[11],b=f.lm[12];const px=Math.hypot((a.x-b.x)*slot.w,(a.y-b.y)*slot.h);const wa=f.wl[11],wb=f.wl[12];const m=Math.hypot(wa.x-wb.x,wa.y-wb.y);return px>2?m/px:NaN});
+  slot.mPerPx=median(ratios)||.002;
+  slot.quality={detected:det/slot.frames.length,vis:median(slot.frames.filter(f=>f.lm).map(f=>KEYJ.reduce((s,j)=>s+f.lm[j].v,0)/KEYJ.length))};
+}
+const px=(slot,p)=>({x:p.x*slot.w,y:p.y*slot.h});
+function wristsPx(slot,f){if(!f.lm)return null;const a=f.lm[15],b=f.lm[16];if(a.v<.3||b.v<.3)return null;return px(slot,mid(a,b))}
+function shoulderYaw(f){if(!f.wl)return NaN;const a=f.wl[11],b=f.wl[12];return deg(Math.atan2(a.z-b.z,a.x-b.x))}
+function hipYaw(f){if(!f.wl)return NaN;const a=f.wl[23],b=f.wl[24];return deg(Math.atan2(a.z-b.z,a.x-b.x))}
+
+function detectEvents(slot,fresh){
+  const F=slot.frames,n=F.length,dt=slot.stride/slot.fps;
+  const hs=new Array(n).fill(NaN),rs=new Array(n).fill(NaN);
+  for(let i=1;i<n-1;i++){
+    const a=wristsPx(slot,F[i-1]),b=wristsPx(slot,F[i+1]);
+    if(a&&b)hs[i]=Math.hypot(b.x-a.x,b.y-a.y)/(2*dt)*slot.mPerPx;
+    const ya=shoulderYaw(F[i-1]),yb=shoulderYaw(F[i+1]);if(Number.isFinite(ya)&&Number.isFinite(yb))rs[i]=Math.abs(adiff(yb,ya))/(2*dt);
+  }
+  const win=Math.max(3,Math.round(.05/dt)|1);
+  const hsS=smooth(fillGaps(hs,4),win),rsS=smooth(fillGaps(rs,4),win);
+  const hN=pctl(hsS,.98)||1,rN=pctl(rsS,.98)||1;
+  const score=hsS.map((h,i)=>{const a=Number.isFinite(h)?h/hN:0,b=Number.isFinite(rsS[i])?rsS[i]/rN:0;return .7*a+.3*b});
+  slot.series={handSpeed:hsS,score};
+  // 真正的揮棒是一段持續的高速，不是單格尖峰：先找 ±0.08 秒平均最高的位置，再在附近取最高格；影片頭尾 0.1 秒不算。
+  const k=Math.max(1,Math.round(.08/dt)),edge=Math.min(Math.round(.1/dt),Math.floor(n/4));
+  const valid=i=>F[i-1]?.lm&&F[i]?.lm&&F[i+1]?.lm;
+  const mass=score.map((_,i)=>{let s=0,c=0;for(let j=i-k;j<=i+k;j++)if(j>=0&&j<n){s+=score[j];c++}return c?s/c:0});
+  let peak=-1;for(let i=edge;i<n-edge;i++)if(valid(i)&&(peak<0||mass[i]>mass[peak]))peak=i;
+  if(peak<0){peak=0;for(let i=0;i<n;i++)if(score[i]>score[peak])peak=i}
+  else{let p=peak;for(let i=Math.max(0,peak-k);i<=Math.min(n-1,peak+k);i++)if(valid(i)&&score[i]>score[p])p=i;peak=p}
+  const ps=score[peak];
+  const idxOf=t=>clamp(Math.round(t/dt),0,n-1);
+  let contact=idxOf(F[peak].t+.03);
+  for(let i=peak;i<n;i++){if(score[i]<ps*.55){contact=Math.min(contact,i);break}}
+  contact=Math.max(contact,peak);
+  slot.auto={peak,contact};
+  if(fresh||!slot.confirmed){slot.ev.contact=contact;slot.confirmed=false}
+  deriveFromContact(slot);
+}
+function deriveFromContact(slot){
+  const F=slot.frames,n=F.length,dt=slot.stride/slot.fps,score=slot.series.score,c=slot.ev.contact;
+  const ps=Math.max(...score.slice(Math.max(0,c-Math.round(.3/dt)),c+1));
+  let i=Math.min(c,slot.auto.peak),launch=i;
+  while(i>0&&c-i<.8/dt){if(score[i]<ps*.15&&score[i-1]<ps*.15){launch=i+1;break}launch=i;i--}
+  if(c-launch<.05/dt)launch=Math.max(0,c-Math.round(.12/dt));
+  let finish=Math.min(n-1,c+Math.round(.5/dt)),low=0;
+  for(let i=c+Math.round(.08/dt);i<n;i++){if(score[i]<ps*.2){low++;if(low>=3){finish=i;break}}else low=0}
+  slot.ev.launch=launch;slot.ev.finish=finish;
+}
+function alignHandedness(){
+  for(const s of ["best","cur"]){
+    const slot=state[s],F=slot.frames,{launch,contact}=slot.ev;
+    const a=nearestLm(slot,launch),b=nearestLm(slot,contact);
+    const wa=a&&wristsPx(slot,a),wb=b&&wristsPx(slot,b);
+    let travel=wa&&wb?wb.x-wa.x:0;
+    if(Math.abs(travel)<2){const sa=a?.lm?mid(a.lm[11],a.lm[12]).x:0,sb=b?.lm?mid(b.lm[11],b.lm[12]).x:0;travel=(sb-sa)*slot.w}
+    slot.mirror=travel<0;
+    const ref=a?.lm||b?.lm;const ankDir=ref?Math.sign(ref[27].x-ref[28].x):1;
+    const autoLeadLeft=Math.sign(travel||1)===ankDir;
+    const sel=$("#sideSel").value;
+    slot.leadLeft=sel==="auto"?autoLeadLeft:sel==="right";
+    slot.autoSide=autoLeadLeft?"右打":"左打";
+  }
+}
+function nearestLm(slot,idx){const F=slot.frames;for(let d=0;d<8;d++){if(F[idx+d]?.lm)return F[idx+d];if(F[idx-d]?.lm)return F[idx-d]}return null}
+function computeMetrics(slot){
+  const F=slot.frames,L=slot.leadLeft,mx=slot.mirror?-1:1;
+  const Li={sh:L?11:12,el:L?13:14,wr:L?15:16,hip:L?23:24,knee:L?25:26,ank:L?27:28},Ri={sh:L?12:11,el:L?14:13,wr:L?16:15,hip:L?24:23,knee:L?26:25,ank:L?28:27};
+  slot.Li=Li;slot.Ri=Ri;
+  for(const f of F){
+    if(!f.lm||!f.wl){f.m=null;continue}
+    const lm=f.lm.map(p=>({x:slot.mirror?1-p.x:p.x,y:p.y,z:p.z,v:p.v})),wl=f.wl.map(p=>({x:p.x*mx,y:p.y,z:p.z}));
+    f.lmN=lm;f.wlN=wl;
+    const shM=mid(lm[11],lm[12]),hipM=mid(lm[23],lm[24]),headM=mid(lm[7],lm[8]);
+    const shW=mid(wl[11],wl[12]),hipW=mid(wl[23],wl[24]),wrW=mid(wl[15],wl[16]);
+    const cm=slot.mPerPx*100;
+    f.m={
+      spineTilt:deg(Math.atan2((hipM.x-shM.x)*slot.w,(hipM.y-shM.y)*slot.h)),
+      shoulderLine:deg(Math.atan2((lm[Li.sh].y-lm[Ri.sh].y)*slot.h,(lm[Li.sh].x-lm[Ri.sh].x)*slot.w)),
+      shoulderYaw:deg(Math.atan2(wl[Li.sh].z-wl[Ri.sh].z,wl[Li.sh].x-wl[Ri.sh].x)),
+      hipYaw:deg(Math.atan2(wl[Li.hip].z-wl[Ri.hip].z,wl[Li.hip].x-wl[Ri.hip].x)),
+      leadKnee:ang3(wl[Li.hip],wl[Li.knee],wl[Li.ank]),rearKnee:ang3(wl[Ri.hip],wl[Ri.knee],wl[Ri.ank]),
+      leadElbow:ang3(wl[Li.sh],wl[Li.el],wl[Li.wr]),rearElbow:ang3(wl[Ri.sh],wl[Ri.el],wl[Ri.wr]),
+      headX:headM.x*slot.w*cm,pelvisX:hipM.x*slot.w*cm,leadAnkX:lm[Li.ank].x*slot.w*cm,leadAnkY:lm[Li.ank].y*slot.h*cm,
+      handsHeight:(shW.y-wrW.y)*100,stance:Math.abs(wl[27].x-wl[28].x)*100,
+      vis:KEYJ.reduce((s,j)=>s+lm[j].v,0)/KEYJ.length
+    };
+  }
+  const keys=["spineTilt","shoulderLine","shoulderYaw","hipYaw","leadKnee","rearKnee","leadElbow","rearElbow","headX","pelvisX","leadAnkX","leadAnkY","handsHeight","stance"];
+  const win=Math.max(3,Math.round(.06*slot.fps/slot.stride)|1);
+  for(const k of keys){const raw=F.map(f=>f.m?f.m[k]:NaN);const sm=smooth(fillGaps(raw,4),k.endsWith("Yaw")?3:win);F.forEach((f,i)=>{if(f.m)f.m[k]=Number.isFinite(sm[i])?sm[i]:raw[i]})}
+}
+function detectStride(slot){
+  const F=slot.frames,dt=slot.stride/slot.fps,{launch,contact}=slot.ev;
+  const y=F.map(f=>f.m?f.m.leadAnkY:NaN);
+  const a=Math.max(0,launch-Math.round(1.0/dt)),b=Math.min(launch+Math.round(.05/dt),contact);
+  const base=pctl(y.slice(a,b+1).filter(Number.isFinite),.85);
+  let top=-1,best=Infinity;for(let i=a;i<=b;i++)if(Number.isFinite(y[i])&&y[i]<best){best=y[i];top=i}
+  const lift=base-best;
+  slot.ev.strideTop=null;slot.ev.plant=null;slot.ev.setup=Math.max(0,launch-Math.round(.45/dt));
+  if(top>=0&&lift>3){
+    slot.ev.strideTop=top;
+    let plant=null;for(let i=top;i<=contact;i++){if(Number.isFinite(y[i])&&y[i]>=base-lift*.25){plant=i;break}}
+    slot.ev.plant=plant;
+    let s=top;for(let i=top;i>=a;i--){if(Number.isFinite(y[i])&&y[i]>=base-lift*.15){s=i;break}}
+    slot.ev.setup=Math.max(0,Math.min(s,launch));
+  }
+  slot.ev.lift=lift;
+}
+function finalizeSlot(slot){
+  const F=slot.frames,e=slot.ev,m0=mAt(slot,e.setup);
+  const sy0=m0?m0.shoulderYaw:0,hy0=m0?m0.hipYaw:0;
+  for(const f of F)if(f.m){f.m.shoulderRot=adiff(f.m.shoulderYaw,sy0);f.m.hipRot=adiff(f.m.hipYaw,hy0)}
+  const mc=mAt(slot,e.contact);slot.rotSign=mc&&mc.shoulderRot<0?-1:1;
+  for(const f of F)if(f.m){f.m.shoulderRot*=slot.rotSign;f.m.hipRot*=slot.rotSign;f.m.sep=f.m.shoulderRot-f.m.hipRot}
+  const dt=slot.stride/slot.fps,ml=mAt(slot,e.launch);
+  const head0=ml?ml.headX:NaN,pel0=m0?m0.pelvisX:NaN,ank0=m0?m0.leadAnkX:NaN;
+  for(const f of F)if(f.m){f.m.headShift=f.m.headX-head0;f.m.pelvisShift=f.m.pelvisX-pel0;f.m.strideLen=f.m.leadAnkX-ank0}
+  slot.timing={downswing:(e.contact-e.launch)*dt,plantToContact:e.plant!=null?(e.contact-e.plant)*dt:NaN,stride:e.plant!=null&&e.strideTop!=null?(e.plant-e.strideTop)*dt:NaN,finish:(e.finish-e.contact)*dt,setupToContact:(e.contact-e.setup)*dt};
+  const peakHand=Math.max(...slot.series.handSpeed.slice(e.launch,e.finish+1).filter(Number.isFinite));slot.peakHand=peakHand;
+}
+function mAt(slot,idx){if(idx==null)return null;const f=nearestLm(slot,idx);return f?.m||null}
+function recompute(){for(const s of ["best","cur"]){const slot=state[s];deriveFromContact(slot);detectStride(slot);finalizeSlot(slot)}buildUI();renderAll()}
+
+/* ---------- rules ---------- */
+const RULES=[
+ {id:"tilt",phase:"contact",key:"spineTilt",label:"擊球時上身側傾",unit:"°",thr:8,joints:["shoulders","hips"],
+  why:(b,c)=>c<b?`擊球這一格你的上身比最佳那球直了 ${fmt(b-c)}°。上身一站直，球棒進入擊球區的高度和角度就跟著變，容易打到球的上緣或切到球。`:`擊球這一格你的上身比最佳那球多傾了 ${fmt(c-b)}°。傾太多的時候，球棒容易從球的下方撈過去。`,
+  fix:(b,c)=>c<b?`回到最佳那球的樣子：擊球時上身往後側傾約 ${fmt(b)}°。轉身時頭和後肩留在後腳上方，不要跟著手一起往前站直。`:`擊球時側傾收回到 ${fmt(b)}° 左右。後肩不要往下掉太多，用轉體而不是把身體往後倒。`,
+  drill:"高 Tee 練習：Tee 架到腰部以上，刻意把後肩壓低、頭留在後腳上方，打 10 顆一組，打完看側傾有沒有回到最佳區間。"},
+ {id:"leadKnee",phase:"contact",key:"leadKnee",label:"擊球時前膝角",unit:"°",thr:12,joints:["leadKnee"],
+  why:(b,c)=>c>b?`前膝比最佳那球直了 ${fmt(c-b)}°（${fmt(c)}° 對 ${fmt(b)}°）。前腳太早打直，重心會往前跑，身體跟著站起來。`:`前膝比最佳那球多彎了 ${fmt(b-c)}°。前腿沒撐住，轉體的力量會被前腳吸掉。`,
+  fix:(b,c)=>c>b?`前腳著地後，膝蓋保持微彎到擊球那一刻再撐直；目標回到 ${fmt(b)}° 左右。`:`著地後把前腿轉硬、撐住，讓髖往前腿上轉；目標回到 ${fmt(b)}° 左右。`,
+  drill:"慢動作空揮 10 次，在擊球位置停住 2 秒，低頭看前膝：跟最佳那球的角度像不像。"},
+ {id:"shRot",phase:"contact",key:"shoulderRot",label:"擊球時轉肩（估計）",unit:"°",thr:12,joints:["shoulders"],
+  why:(b,c)=>c<b?`從準備到擊球，肩膀轉了 ${fmt(c)}°，比最佳那球少 ${fmt(b-c)}°。上半身沒跟上，棒速和攻擊角都會掉。`:`肩膀比最佳那球多轉 ${fmt(c-b)}°。肩膀開太早，球棒會被帶著繞，容易打不扎實。`,
+  fix:(b,c)=>c<b?`轉身要把胸口轉到面對投手；目標跟最佳那球一樣轉到 ${fmt(b)}° 上下。`:`前肩多留一拍，先轉髖再轉肩；目標回到 ${fmt(b)}° 左右。`,
+  drill:"雙手抱球棒在胸前，從準備轉到擊球位置 10 次，感覺胸口的轉動量；再拿棒照做。"},
+ {id:"hipRot",phase:"contact",key:"hipRot",label:"擊球時轉髖（估計）",unit:"°",thr:12,joints:["hips"],
+  why:(b,c)=>c<b?`髖部轉了 ${fmt(c)}°，比最佳那球少 ${fmt(b-c)}°。下半身啟動不夠，等於少了一段力量來源。`:`髖部比最佳那球多轉 ${fmt(c-b)}°。髖開太多，上半身會被拉開。`,
+  fix:(b,c)=>c<b?`前腳著地後，用後腳把髖往投手方向轉；目標回到 ${fmt(b)}° 左右。`:`髖的轉動收一點，讓上下半身的時間差回到最佳那球的樣子。`,
+  drill:"後腳踩球或毛巾做「踩轉」練習：前腳著地後只轉髖不動手，10 次一組。"},
+ {id:"sep",phase:"launch",key:"sep",label:"啟動時肩髖分離（估計）",unit:"°",thr:10,joints:["shoulders","hips"],
+  why:(b,c)=>c<b?`啟動時肩和髖的角度差只有 ${fmt(c)}°，最佳那球是 ${fmt(b)}°。分離少代表蓄力少，像沒拉開的橡皮筋。`:`啟動時肩髖分離 ${fmt(c)}°，比最佳那球多 ${fmt(c-b)}°。拉太開，上半身容易晚到。`,
+  fix:(b,c)=>c<b?`前腳著地時刻意讓肩膀留在原位、髖先轉，拉出 ${fmt(b)}° 左右的差。`:`髖先轉但不要拉太大，讓肩膀能準時跟上。`,
+  drill:"面對鏡子做分段揮棒：先踩前腳轉髖、停住、再轉肩，每段停 1 秒，10 次一組。"},
+ {id:"head",phase:"contact",key:"headShift",label:"啟動到擊球頭部位移（估計）",unit:"cm",thr:5,joints:["nose"],
+  why:(b,c)=>`從啟動到擊球，頭往投手方向移了 ${fmt(c)} cm，最佳那球是 ${fmt(b)} cm。頭一動，眼睛跟球的距離就變，時間點容易跑掉。`,
+  fix:(b,c)=>`擊球時頭留在原位，讓身體繞著頭轉；目標位移控制在 ${fmt(Math.max(Math.abs(b),3))} cm 以內。`,
+  drill:"Tee 打擊時請人在你面前立一支球棒當參考線，擊球時頭不要越過那條線。"},
+ {id:"downswing",timing:"downswing",label:"下棒時間（啟動→擊球）",unit:"s",thr:.02,digits:2,
+  why:(b,c)=>c>b?`從啟動到擊球用了 ${fmt(c,2)} 秒，比最佳那球慢 ${fmt(c-b,2)} 秒。這跟 Blast 的 Time to Contact 是同一件事，可以互相對照。`:`從啟動到擊球只用 ${fmt(c,2)} 秒，比最佳那球快 ${fmt(b-c,2)} 秒；可能是提早啟動或動作變急。`,
+  fix:(b,c)=>c>b?`啟動後不要有停頓，手跟著轉體一次到球；目標回到 ${fmt(b,2)} 秒。`:`啟動晚一點、看球久一點，讓節奏回到 ${fmt(b,2)} 秒左右。`,
+  drill:"心裡數「一、二、打」：一抬腳、二著地、「打」就要碰到球。用手機節拍器配合，10 次一組。"},
+ {id:"plantToContact",timing:"plantToContact",label:"著地→擊球時間",unit:"s",thr:.04,digits:2,
+  why:(b,c)=>c>b?`前腳著地到擊球用了 ${fmt(c,2)} 秒，比最佳那球多 ${fmt(c-b,2)} 秒。著地後等太久，蓄力會漏掉。`:`著地到擊球只有 ${fmt(c,2)} 秒，比最佳那球短 ${fmt(b-c,2)} 秒；可能著地太晚或還沒站穩就揮。`,
+  fix:(b,c)=>`讓著地跟啟動連在一起：著地的瞬間就是啟動的瞬間，目標回到 ${fmt(b,2)} 秒。`,
+  drill:"用 Tee 做「著地即打」練習：前腳一踩到地就揮，不要有第二個停頓。"},
+ {id:"stride",phase:"plant",key:"strideLen",label:"跨步距離（估計）",unit:"cm",thr:10,joints:["leadAnk"],
+  why:(b,c)=>c>b?`前腳往投手方向跨了 ${fmt(c)} cm，比最佳那球多 ${fmt(c-b)} cm。跨太大，重心容易往前跑、身體站起來。`:`前腳只跨了 ${fmt(c)} cm，比最佳那球少 ${fmt(b-c)} cm。`,
+  fix:(b,c)=>`跨步回到 ${fmt(b)} cm 左右；可以在地上貼一條線當前腳的落點。`,
+  drill:"地上貼膠帶標出最佳那球的落腳點，做 10 次抬腳著地，不揮棒，只練落點。"},
+ {id:"hands",phase:"launch",key:"handsHeight",label:"啟動時手的高度（估計）",unit:"cm",thr:8,joints:["wrists"],
+  why:(b,c)=>c<b?`啟動時手比肩膀低 ${fmt(-c)} cm，最佳那球手在肩膀${b>=0?"上方":"下方"} ${fmt(Math.abs(b))} cm。手起點太低，球棒容易從下面撈。`:`啟動時手比最佳那球高 ${fmt(c-b)} cm，球棒下來的路徑會變陡。`,
+  fix:(b,c)=>`啟動時手的位置回到最佳那球的高度：肩膀${b>=0?"上方":"下方"}約 ${fmt(Math.abs(b))} cm。`,
+  drill:"在鏡子前做 10 次「抬腳、著地、停」，停住時檢查手的高度。"},
+];
+function ruleVal(slot,r){if(r.timing)return slot.timing[r.timing];const idx=slot.ev[r.phase];if(idx==null)return NaN;const m=mAt(slot,idx);return m?m[r.key]:NaN}
+function evalRules(){
+  const out=[];
+  for(const r of RULES){const b=ruleVal(state.best,r),c=ruleVal(state.cur,r);if(!Number.isFinite(b)||!Number.isFinite(c))continue;const d=c-b,ratio=Math.abs(d)/r.thr;out.push({r,b,c,d,ratio,sev:ratio>=2?"red":ratio>=1?"amber":"green"})}
+  out.sort((x,y)=>y.ratio-x.ratio);
+  state.findings=out.filter(x=>x.sev!=="green").slice(0,3);
+  state.good=out.filter(x=>x.sev==="green");
+  state.allRules=out;
+}
+
+/* ---------- UI build ---------- */
+function buildUI(){
+  evalRules();
+  const b=state.best,c=state.cur;
+  const tStart=Math.min((b.frames[b.ev.setup].t-b.frames[b.ev.contact].t),(c.frames[c.ev.setup].t-c.frames[c.ev.contact].t))-.15;
+  const tEnd=Math.max((b.frames[b.ev.finish].t-b.frames[b.ev.contact].t),(c.frames[c.ev.finish].t-c.frames[c.ev.contact].t))+.1;
+  const lo=Math.max(-b.frames[b.ev.contact].t,-c.frames[c.ev.contact].t),hi=Math.min(b.dur-b.frames[b.ev.contact].t,c.dur-c.frames[c.ev.contact].t)-.05;
+  state.win=[Math.max(tStart,lo),Math.min(tEnd,hi)];
+  $("#metaLine").innerHTML=`<span>SWING LAB</span><span>棒球 · 雙影片比對</span><span>${esc(c.file.name)}</span><span><b>${c.fps}</b> FPS</span><span><b>${c.frames.length}</b> 格</span><span><b>33</b> 關節點 · 3D 估計</span><span>${c.leadLeft?"右打":"左打"}（${$("#sideSel").value==="auto"?"自動":"手動"}）</span>`;
+  const top=state.findings;
+  const first=top[0];
+  const headline=first?`${first.r.label}差最多（最佳 ${fmt(first.b,first.r.digits||0)}${first.r.unit}、目前 ${fmt(first.c,first.r.digits||0)}${first.r.unit}）`:"擊球幀主要數字都跟最佳那球接近";
+  $("#h1sub").textContent=first?"兩球拆解":"兩球幾乎一樣";
+  $("#lead").innerHTML=`<b>整體：</b>跟你最佳那球相比，目前這球${esc(headline)}。下棒時間 ${fmt(c.timing.downswing,2)} 秒（最佳 ${fmt(b.timing.downswing,2)} 秒）、擊球時轉肩約 ${fmt(ruleVal(c,RULES.find(r=>r.id==="shRot")))}°／轉髖約 ${fmt(ruleVal(c,RULES.find(r=>r.id==="hipRot")))}°（估計）。${top.length?`要再進步的${top.length}件事：${top.map(x=>x.r.label.replace(/（估計）/,"")).join("、")}。`:""}${state.good.length?`有 ${state.good.length} 項維持得跟最佳一樣。`:""}橘色是你目前的動作，青色是你最佳那球。${(b.confirmed&&c.confirmed)?"":"<b>擊球幀還沒確認，數字可能會變。</b>"}`;
+  $("#chips").innerHTML=state.allRules.slice(0,6).map(x=>`<span class="chip ${x.sev}">${esc(x.r.label.replace(/（估計）/,""))} ${fmt(x.c,x.r.digits||0)}${x.r.unit}</span>`).join("")+`<span class="chip">鏡像對齊 ${b.mirror!==c.mirror?"已套用":"不需要"}</span>`;
+  buildTrack();buildContactUI();buildFindings();buildTable();buildQuality();buildKeyNums();drawTimeline();
+}
+const esc=s=>String(s??"").replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+function relT(slot,idx){return idx==null?NaN:slot.frames[idx].t-slot.frames[slot.ev.contact].t}
+function buildTrack(){
+  const c=state.cur,b=state.best,[w0,w1]=state.win,W=w1-w0,P=t=>clamp((t-w0)/W*100,0,100);
+  const e=c.ev,segs=[];
+  const marks=[["setup",relT(c,e.setup)],["plant",relT(c,e.plant)],["launch",relT(c,e.launch)],["contact",0],["finish",relT(c,e.finish)]].filter(x=>Number.isFinite(x[1]));
+  const names={setup:e.plant!=null?"跨步":"準備",plant:"蓄力",launch:"下棒",contact:"收尾",finish:""};
+  const colors={setup:"#1d3f52",plant:"#1f5a64",launch:"#8a5a16",contact:"#4a2230",finish:"#122a37"};
+  segs.push({from:w0,to:marks[0][1],name:"",color:"#122a37"});
+  for(let i=0;i<marks.length;i++){const to=i+1<marks.length?marks[i+1][1]:w1;const key=marks[i][0];segs.push({from:marks[i][1],to,name:names[key],color:colors[key]})}
+  $("#segs").innerHTML=segs.map(s=>`<div style="left:${P(s.from)}%;width:${P(s.to)-P(s.from)}%;background:${s.color}">${s.name}</div>`).join("");
+  $$("#ptrack .mk").forEach(el=>el.remove());
+  const mk=[["plant","著地"],["launch","啟動"],["contact","擊球"]].map(([k,n])=>{const t=relT(c,c.ev[k]);return Number.isFinite(t)?`<div class="mk" style="left:${P(t)}%"><span>${n}</span></div>`:""}).join("");
+  const bm=["plant","launch"].map(k=>{const t=relT(b,b.ev[k]);return Number.isFinite(t)?`<div class="mk b" style="left:${P(t)}%" title="最佳 ${PH[k]}"></div>`:""}).join("");
+  $("#segs").insertAdjacentHTML("afterend",mk+bm);
+}
+function buildContactUI(){
+  $("#contactUI").innerHTML=["best","cur"].map(s=>{const slot=state[s];return`<div class="cc" data-cc="${s}"><div class="row" style="display:flex;justify-content:space-between"><h3 style="color:${s==="best"?C.best:C.cur}">${s==="best"?"最佳揮棒":"目前揮棒"}</h3><span class="state ${slot.confirmed?"ok":"warn"}">${slot.confirmed?"✓ 已確認":"⚠ 自動估計，未確認"}</span></div><div class="ccwrap"><canvas></canvas></div><input type="range" min="0" max="${slot.frames.length-1}" step="1" value="${slot.ev.contact}"><div class="ccrow"><button data-d="-5">−5</button><button data-d="-1">−1 格</button><button data-d="1">+1 格</button><button data-d="5">+5</button><span class="mono subtle" data-ccTime></span><button class="primary" data-set style="margin-left:auto">就是這一格 ✓</button><button data-auto>回到自動建議</button></div></div>`}).join("");
+  for(const s of ["best","cur"]){
+    const slot=state[s],box=$(`[data-cc="${s}"]`),cv=box.querySelector("canvas"),range=box.querySelector("input");
+    if(!slot.scrub){slot.scrub=document.createElement("video");slot.scrub.muted=true;slot.scrub.playsInline=true}
+    if(slot.scrub.src!==slot.url)slot.scrub.src=slot.url;
+    slot.scrubCanvas=cv;slot.scrubIdx=slot.ev.contact;
+    const upd=()=>{range.value=slot.scrubIdx;box.querySelector("[data-ccTime]").textContent=`${fmtT(slot.frames[slot.scrubIdx].t)} · F${slot.scrubIdx*slot.stride}${slot.scrubIdx===slot.ev.contact?" · 目前擊球幀":""}`;drawScrub(slot)};
+    box.querySelectorAll("[data-d]").forEach(bt=>bt.addEventListener("click",()=>{slot.scrubIdx=clamp(slot.scrubIdx+Number(bt.dataset.d),0,slot.frames.length-1);upd()}));
+    range.addEventListener("input",()=>{slot.scrubIdx=Number(range.value);upd()});
+    box.querySelector("[data-set]").addEventListener("click",()=>{slot.ev.contact=slot.scrubIdx;slot.confirmed=true;recompute();jumpTo("contact")});
+    box.querySelector("[data-auto]").addEventListener("click",()=>{slot.ev.contact=slot.auto.contact;slot.confirmed=false;slot.scrubIdx=slot.ev.contact;recompute();jumpTo("contact")});
+    upd();
+  }
+}
+async function drawScrub(slot){
+  const f=slot.frames[slot.scrubIdx],cv=slot.scrubCanvas,v=slot.scrub;
+  await loadMeta(v);await seekTo(v,f.t);
+  const W=cv.clientWidth*devicePixelRatio,H=cv.clientHeight*devicePixelRatio;cv.width=W;cv.height=H;
+  const ctx=cv.getContext("2d");ctx.fillStyle="#000";ctx.fillRect(0,0,W,H);
+  const sc=Math.min(W/slot.w,H/slot.h),dw=slot.w*sc,dh=slot.h*sc,dx=(W-dw)/2,dy=(H-dh)/2;
+  ctx.drawImage(v,dx,dy,dw,dh);
+  const lf=nearestLm(slot,slot.scrubIdx);
+  if(lf)drawImageSkeleton(ctx,lf.lm,dx,dy,dw,dh,slot.id==="best"?C.best:C.cur,false);
+  ctx.fillStyle="rgba(0,0,0,.5)";ctx.fillRect(0,0,W,26*devicePixelRatio);ctx.fillStyle="#fff";ctx.font=`${12*devicePixelRatio}px ${getComputedStyle(document.body).fontFamily}`;
+  ctx.fillText(`${fmtT(f.t)}  F${slot.scrubIdx*slot.stride}  手部速度 ${fmt(slot.series.handSpeed[slot.scrubIdx],1)} m/s（估計）  ${slot.scrubIdx===slot.auto.contact?"← 自動建議":""}`,8*devicePixelRatio,18*devicePixelRatio);
+}
+function buildFindings(){
+  $("#improve").innerHTML=state.findings.length?state.findings.map(x=>`<div class="fcard"><div class="ft"><h3>${esc(x.r.label)}</h3><span class="tag ${x.sev}">${x.sev==="red"?"重點":"注意"}</span></div><div class="big ${x.sev}">${fmt(x.c,x.r.digits||0)}${x.r.unit}<small>最佳 ${fmt(x.b,x.r.digits||0)}${x.r.unit} · 差 ${sgn(x.d,x.r.digits||0)}${x.r.unit}</small></div><p>${esc(x.r.why(x.b,x.c))}</p><div class="kv"><b>改法</b><span>${esc(x.r.fix(x.b,x.c))}</span><b>練習</b><span>${esc(x.r.drill)}</span></div><button data-show="${x.r.phase||"contact"}">看示範 · ${PH[x.r.phase||"contact"]}定格 →</button></div>`).join(""):`<div class="fcard"><h3>沒有超過門檻的差異</h3><p>擊球幀和啟動幀的主要數字都跟最佳那球接近。把兩球的差異留給整段時間線和逐格比較。</p></div>`;
+  $$("#improve [data-show]").forEach(bt=>bt.addEventListener("click",()=>{jumpTo(bt.dataset.show);$("#stage").scrollIntoView({behavior:"smooth",block:"center"})}));
+  $("#good").innerHTML=state.good.length?state.good.map(x=>`<div><h3>${esc(x.r.label.replace(/（估計）/,""))}</h3><p>最佳 ${fmt(x.b,x.r.digits||0)}${x.r.unit}、目前 ${fmt(x.c,x.r.digits||0)}${x.r.unit}，差 ${sgn(x.d,x.r.digits||0)}${x.r.unit}，在範圍內（門檻 ${x.r.thr}${x.r.unit}）。</p></div>`).join(""):`<div><p class="subtle">目前沒有落在門檻內的項目。</p></div>`;
+}
+const TABLE_METRICS=[["spineTilt","上身側傾","°",8],["shoulderLine","肩線傾斜","°",8],["shoulderRot","轉肩（估）","°",12],["hipRot","轉髖（估）","°",12],["sep","肩髖分離（估）","°",10],["leadKnee","前膝角","°",12],["rearKnee","後膝角","°",12],["leadElbow","前手肘角","°",15],["rearElbow","後手肘角","°",15],["handsHeight","手高於肩（估）","cm",8],["headShift","頭部位移（估）","cm",5],["strideLen","前腳位移（估）","cm",10]];
+function buildTable(){
+  const phases=["setup","plant","launch","contact","finish"];
+  let h=`<tr><th>指標</th>${phases.map(p=>`<th>${PH[p]}<br><span class="subtle">最佳 / 目前</span></th>`).join("")}</tr>`;
+  for(const [k,name,unit,thr] of TABLE_METRICS){
+    h+=`<tr><td>${name}${unit?` (${unit})`:""}</td>`+phases.map(p=>{const b=mAt(state.best,state.best.ev[p]),c=mAt(state.cur,state.cur.ev[p]);const vb=b?b[k]:NaN,vc=c?c[k]:NaN;const d=vc-vb;const cls=!Number.isFinite(d)?"":Math.abs(d)>=2*thr?"red":Math.abs(d)>=thr?"amber":"green";return`<td><span class="b">${fmt(vb)}</span> / <span class="${cls||"c"}">${fmt(vc)}</span></td>`}).join("")+"</tr>";
+  }
+  const T=[["setupToContact","準備→擊球"],["stride","抬腳→著地"],["plantToContact","著地→擊球"],["downswing","啟動→擊球（下棒）"],["finish","擊球→收尾"]];
+  h+=`<tr><th colspan="6" style="text-align:left;padding-top:14px">時間 (秒)</th></tr>`;
+  for(const [k,name] of T){const vb=state.best.timing[k],vc=state.cur.timing[k],d=vc-vb;const cls=!Number.isFinite(d)?"":Math.abs(d)>=.06?"red":Math.abs(d)>=.03?"amber":"green";h+=`<tr><td>${name}</td><td colspan="5" style="text-align:left"><span class="b">${fmt(vb,2)}</span> / <span class="${cls||"c"}">${fmt(vc,2)}</span>　差 ${sgn(d,2)}</td></tr>`}
+  $("#phaseTable").innerHTML=h;
+}
+function buildQuality(){
+  const b=state.best,c=state.cur;
+  const q=[["最佳：骨架可見度",Math.round(b.quality.vis*100)],["目前：骨架可見度",Math.round(c.quality.vis*100)],["最佳：有偵測到人的格數",`${Math.round(b.quality.detected*100)}%`],["目前：有偵測到人的格數",`${Math.round(c.quality.detected*100)}%`],["最佳：影格率 / 取樣",`${b.fps} fps / 每 ${b.stride} 格`],["目前：影格率 / 取樣",`${c.fps} fps / 每 ${c.stride} 格`],["擊球幀確認",`${b.confirmed?"最佳 ✓":"最佳 —"} · ${c.confirmed?"目前 ✓":"目前 —"}`],["抬腳高度（估計）",`${fmt(b.ev.lift)} / ${fmt(c.ev.lift)} cm`]];
+  $("#quality").innerHTML=q.map(([n,v])=>`<div><span>${n}</span><b>${v}</b></div>`).join("");
+}
+function buildKeyNums(){
+  const b=state.best,c=state.cur,rows=[];
+  const add=(name,vb,vc,unit,d,thr)=>{const diff=vc-vb;const cls=!Number.isFinite(diff)?"c":Math.abs(diff)>=2*thr?"red":Math.abs(diff)>=thr?"amber":"green";rows.push(`<div class="kn"><span class="lbl">${name}</span><b><span class="b">${fmt(vb,d)}</span> / <span class="${cls}">${fmt(vc,d)}</span>${unit}</b></div>`)};
+  add("下棒時間",b.timing.downswing,c.timing.downswing," s",2,.02);
+  add("著地→擊球",b.timing.plantToContact,c.timing.plantToContact," s",2,.04);
+  const mb=mAt(b,b.ev.contact),mc=mAt(c,c.ev.contact);
+  add("擊球轉肩（估）",mb?.shoulderRot,mc?.shoulderRot,"°",0,12);
+  add("擊球轉髖（估）",mb?.hipRot,mc?.hipRot,"°",0,12);
+  add("擊球前膝角",mb?.leadKnee,mc?.leadKnee,"°",0,12);
+  add("擊球上身側傾",mb?.spineTilt,mc?.spineTilt,"°",0,8);
+  add("頭部位移（估）",mb?.headShift,mc?.headShift," cm",0,5);
+  rows.push(`<div class="kn"><span class="lbl">擊球幀</span><b class="${b.confirmed&&c.confirmed?"green":"amber"}">${b.confirmed?"✓":"估"} / ${c.confirmed?"✓":"估"}</b></div>`);
+  rows.push(`<div class="kn"><span class="lbl">打者</span><b>${c.leadLeft?"右打":"左打"}${$("#sideSel").value==="auto"?"（自動）":""}</b></div>`);
+  $("#keyNums").innerHTML=rows.join("");
+}
+
+/* ---------- playback ---------- */
+function slotT(slot){return slot.frames[slot.ev.contact].t+state.t}
+function frameAt(slot,tAbs){const dt=slot.stride/slot.fps;const idx=clamp(Math.round((tAbs-slot.frames[0].t)/dt),0,slot.frames.length-1);return nearestLm(slot,idx)||slot.frames[idx]}
+function phaseNear(slot){const tAbs=slotT(slot);let best=null,bd=.045;for(const k of ["setup","plant","launch","contact","finish"]){const i=slot.ev[k];if(i==null)continue;const d=Math.abs(slot.frames[i].t-tAbs);if(d<bd){bd=d;best=k}}return best}
+function jumpTo(k){stopPlay();const c=state.cur;const i=c.ev[k];if(i==null)return;state.t=c.frames[i].t-c.frames[c.ev.contact].t;$$("[data-jump]").forEach(b=>b.classList.toggle("on",b.dataset.jump===k));renderAll()}
+function stopPlay(){state.playing=false;$("#playBtn").textContent="▶ 播放";for(const s of ["best","cur"])state[s].video.pause()}
+function togglePlay(){if(state.playing){stopPlay();syncVideos(true);return}state.playing=true;$("#playBtn").textContent="❚❚ 暫停";state.lastTick=performance.now();if(state.t>=state.win[1]-.01)state.t=state.win[0];requestAnimationFrame(tick)}
+function tick(now){
+  if(!state.playing)return;
+  const dt=(now-state.lastTick)/1000;state.lastTick=now;
+  state.t+=dt*state.rate;if(state.t>state.win[1])state.t=state.win[0];
+  syncVideos(false);renderAll();requestAnimationFrame(tick);
+}
+function syncVideos(force){
+  for(const s of ["best","cur"]){
+    const slot=state[s],v=slot.video,want=clamp(slotT(slot),0,slot.dur-.01);
+    const visible=state.vtab===s;
+    if(!visible){if(!v.paused)v.pause();continue}
+    if(state.playing){v.playbackRate=state.rate;if(Math.abs(v.currentTime-want)>.12)v.currentTime=want;if(v.paused)v.play().catch(()=>{})}
+    else{if(!v.paused)v.pause();if(force||Math.abs(v.currentTime-want)>.001)v.currentTime=want}
+  }
+}
+$("#playBtn").addEventListener("click",togglePlay);
+$$("[data-rate]").forEach(b=>b.addEventListener("click",()=>{state.rate=Number(b.dataset.rate);$$("[data-rate]").forEach(x=>x.classList.toggle("on",x===b))}));
+$$("[data-disp]").forEach(b=>b.addEventListener("click",()=>{state.disp=b.dataset.disp;$$("[data-disp]").forEach(x=>x.classList.toggle("on",x===b));renderAll()}));
+$$("[data-view]").forEach(b=>b.addEventListener("click",()=>{state.view=b.dataset.view;$$("[data-view]").forEach(x=>x.classList.toggle("on",x===b));renderAll()}));
+$$("[data-layer]").forEach(b=>b.addEventListener("click",()=>{const k=b.dataset.layer;state.layers[k]=!state.layers[k];b.classList.toggle("on",state.layers[k]);renderAll()}));
+$$("[data-jump]").forEach(b=>b.addEventListener("click",()=>jumpTo(b.dataset.jump)));
+$$("[data-stepf]").forEach(b=>b.addEventListener("click",()=>stepFrame(Number(b.dataset.stepf))));
+$$("[data-vtab]").forEach(b=>b.addEventListener("click",()=>{state.vtab=b.dataset.vtab;$$("[data-vtab]").forEach(x=>x.classList.toggle("on",x===b));$("#vwrapCur").classList.toggle("hidden",state.vtab!=="cur");$("#vwrapBest").classList.toggle("hidden",state.vtab!=="best");syncVideos(true);resize()}));
+function stepFrame(d){stopPlay();const c=state.cur;state.t=clamp(state.t+d*c.stride/c.fps,state.win[0],state.win[1]);syncVideos(true);renderAll()}
+document.addEventListener("keydown",e=>{if(!state.ready||e.target.matches("input,select,textarea"))return;if(e.code==="Space"){e.preventDefault();togglePlay()}if(e.key==="ArrowLeft"){e.preventDefault();stepFrame(-1)}if(e.key==="ArrowRight"){e.preventDefault();stepFrame(1)}});
+const ptrack=$("#ptrack");let dragging=false;
+const trackSeek=e=>{const r=ptrack.getBoundingClientRect();const p=clamp((e.clientX-r.left)/r.width,0,1);state.t=state.win[0]+p*(state.win[1]-state.win[0]);syncVideos(true);renderAll()};
+ptrack.addEventListener("pointerdown",e=>{dragging=true;stopPlay();ptrack.setPointerCapture(e.pointerId);trackSeek(e)});
+ptrack.addEventListener("pointermove",e=>dragging&&trackSeek(e));
+ptrack.addEventListener("pointerup",()=>dragging=false);
+$("#sideSel").addEventListener("change",()=>{if(!state.ready)return;alignHandedness();for(const s of ["best","cur"]){computeMetrics(state[s]);detectStride(state[s]);finalizeSlot(state[s])}buildUI();renderAll()});
+window.addEventListener("resize",()=>state.ready&&resize());
+function resize(){const st=$("#stage"),cv=$("#stageCanvas");cv.width=st.clientWidth*devicePixelRatio;cv.height=st.clientHeight*devicePixelRatio;for(const s of ["best","cur"]){const slot=state[s];slot.ov.width=slot.ov.clientWidth*devicePixelRatio;slot.ov.height=slot.ov.clientHeight*devicePixelRatio}renderAll()}
+
+/* ---------- rendering ---------- */
+function renderAll(){
+  if(!state.ready)return;
+  const [w0,w1]=state.win;$("#phead").style.left=clamp((state.t-w0)/(w1-w0)*100,0,100)+"%";
+  $$("[data-jump]").forEach(b=>b.classList.toggle("on",phaseNear(state.cur)===b.dataset.jump));
+  const c=state.cur,fc=frameAt(c,slotT(c));
+  const ph=phaseNear(c);
+  $("#phaseTag").textContent=ph?`${PH_EN[ph]} · ${PH[ph]}${ph==="contact"?"瞬間":""}`:`T ${sgn(state.t,2)} s`;
+  $("#cornerTR").innerHTML=`<b>${ph?PH[ph]:"—"}</b><span>${fmtT(slotT(c))} · F${fc.i*c.stride}${ph==="contact"&&!c.confirmed?" · 未確認":""}</span>`;
+  $("#vTime").textContent=`${state.vtab==="cur"?"目前":"最佳"} ${fmtT(slotT(state[state.vtab]))} · T ${sgn(state.t,2)}s`;
+  drawStage();drawReadout();drawTempo();
+  for(const s of ["best","cur"])if(state.vtab===s)drawOverlay(state[s]);
+}
+function drawReadout(){
+  const rows=[["上身側傾","spineTilt","°"],["轉肩（估）","shoulderRot","°"],["轉髖（估）","hipRot","°"],["前膝角","leadKnee","°"],["前手肘角","leadElbow","°"],["頭部位移（估）","headShift","cm"]];
+  const mb=frameAt(state.best,slotT(state.best)).m,mc=frameAt(state.cur,slotT(state.cur)).m;
+  $("#readout").innerHTML=`<tr><th></th><th style="color:${C.cur}">球員</th><th style="color:${C.best}">最佳</th></tr>`+rows.map(([n,k,u])=>`<tr><td>${n}</td><td class="c">${fmt(mc?.[k])}${u}</td><td class="b">${fmt(mb?.[k])}${u}</td></tr>`).join("");
+}
+function drawTempo(){
+  const c=state.cur,t=c.timing;const parts=[["跨步",t.stride,"#1f5a64"],["蓄力",Number.isFinite(t.plantToContact)?t.plantToContact-t.downswing:NaN,"#26516f"],["下棒",t.downswing,"#c98a2a"],["收尾",t.finish,"#7a2a3a"]].filter(p=>Number.isFinite(p[1])&&p[1]>0);
+  const tot=parts.reduce((s,p)=>s+p[1],0)||1;
+  $("#tempo").innerHTML=`<div>下棒 <b style="color:#fff">${fmt(t.downswing,2)}s</b> · 最佳 ${fmt(state.best.timing.downswing,2)}s · 著地→擊球 ${fmt(t.plantToContact,2)}s</div><div class="seg">${parts.map(p=>`<i style="width:${p[1]/tot*100}%;background:${p[2]}" title="${p[0]} ${fmt(p[1],2)}s"></i>`).join("")}</div>`;
+}
+function toMeters(slot,f){
+  if(!f?.lmN)return null;
+  if(state.view==="image"){const hip=mid(f.lmN[23],f.lmN[24]);return f.lmN.map(p=>({x:(p.x-hip.x)*slot.w*slot.mPerPx,y:(p.y-hip.y)*slot.h*slot.mPerPx,z:0,v:p.v}))}
+  return f.wlN.map((p,i)=>({x:p.x,y:p.y,z:p.z,v:f.lmN[i].v}));
+}
+function viewXY(p){
+  switch(state.view){
+    case "target":return{x:-p.z,y:p.y};
+    case "top":return{x:p.x,y:p.z};
+    default:return{x:p.x,y:p.y};
+  }
+}
+function drawStage(){
+  const cv=$("#stageCanvas"),ctx=cv.getContext("2d"),W=cv.width,H=cv.height,dpr=devicePixelRatio;
+  ctx.clearRect(0,0,W,H);
+  const g=ctx.createRadialGradient(W/2,H*.55,10,W/2,H*.55,H*.8);g.addColorStop(0,"#0a1c29");g.addColorStop(1,"#050d14");ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle="rgba(57,212,255,.07)";ctx.lineWidth=1;for(let x=0;x<W;x+=60*dpr){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}for(let y=0;y<H;y+=60*dpr){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+  const ppm=H*.40;
+  const slots=state.disp==="cur"?["cur"]:state.disp==="best"?["best"]:["best","cur"];
+  const centers={};
+  // 右側留給定格標註框；左右並排時兩個人形放在 0.22 / 0.52 的位置
+  const annotOn=state.layers.annot&&slots.includes("cur");
+  for(const s of slots){centers[s]={x:state.disp==="side"?(s==="best"?W*.22:W*(annotOn?.52:.70)):W*(annotOn?.42:.5),y:H*.50}}
+  if(state.layers.floor&&state.view!=="top"){for(const s of slots){const cx=centers[s].x,fy=centers[s].y+ppm*1.0;ctx.strokeStyle=s==="cur"?"rgba(255,155,74,.35)":"rgba(57,212,255,.35)";ctx.lineWidth=1.5*dpr;ctx.beginPath();ctx.ellipse(cx,fy,ppm*.75,ppm*.16,0,0,Math.PI*2);ctx.stroke();ctx.fillStyle=s==="cur"?"rgba(255,155,74,.05)":"rgba(57,212,255,.05)";ctx.fill()}}
+  const proj={};
+  for(const s of slots){
+    const slot=state[s],f=frameAt(slot,slotT(slot)),pts=toMeters(slot,f);
+    if(!pts)continue;
+    const c=centers[s];
+    const P=pts.map(p=>{const q=viewXY(p);return{x:c.x+q.x*ppm,y:c.y+q.y*ppm,v:p.v}});
+    proj[s]=P;
+    if(state.layers.trail)drawTrail(ctx,slot,c,ppm,s==="cur"?C.cur:C.best);
+    drawGlowSkeleton(ctx,P,s==="cur"?C.cur:C.best,dpr,s==="cur"&&state.disp!=="best"&&slots.length>1?1:0.95);
+  }
+  if(proj.cur&&state.layers.annot)drawAnnotations(ctx,proj.cur,dpr);
+}
+function drawTrail(ctx,slot,c,ppm,color){
+  const t0=slotT(slot);ctx.lineWidth=2*devicePixelRatio;
+  let prev=null;
+  for(let t=t0-.3;t<=t0;t+=slot.stride/slot.fps){const f=frameAt(slot,t);const pts=toMeters(slot,f);if(!pts){prev=null;continue}const w=viewXY(mid(pts[15],pts[16]));const x=c.x+w.x*ppm,y=c.y+w.y*ppm;if(prev){ctx.strokeStyle=color;ctx.globalAlpha=.15+.85*((t-(t0-.3))/.3);ctx.beginPath();ctx.moveTo(prev.x,prev.y);ctx.lineTo(x,y);ctx.stroke()}prev={x,y}}
+  ctx.globalAlpha=1;
+}
+function drawGlowSkeleton(ctx,P,color,dpr,alpha){
+  ctx.save();ctx.globalAlpha=alpha;ctx.lineCap="round";ctx.lineJoin="round";
+  ctx.shadowColor=color;ctx.shadowBlur=14*dpr;ctx.strokeStyle=color;ctx.lineWidth=3*dpr;
+  for(const [a,b] of BONES){if(P[a].v<.3||P[b].v<.3)continue;ctx.beginPath();ctx.moveTo(P[a].x,P[a].y);ctx.lineTo(P[b].x,P[b].y);ctx.stroke()}
+  const head=mid(P[7],P[8]);ctx.beginPath();ctx.arc(head.x,head.y,ctx.canvas.height*.40*.11,0,Math.PI*2);ctx.stroke();
+  ctx.shadowBlur=8*dpr;ctx.fillStyle="#061018";
+  for(const j of KEYJ){if(P[j].v<.3)continue;ctx.beginPath();ctx.arc(P[j].x,P[j].y,4.5*dpr,0,Math.PI*2);ctx.fill();ctx.lineWidth=2*dpr;ctx.stroke()}
+  ctx.restore();
+}
+function jointPoint(slot,P,names){
+  const Li=slot.Li,Ri=slot.Ri;const map={nose:[0],shoulders:[11,12],hips:[23,24],wrists:[15,16],leadKnee:[Li.knee],leadAnk:[Li.ank],rearKnee:[Ri.knee]};
+  const idx=names.flatMap(n=>map[n]||[]).filter(i=>P[i]?.v>.3);if(!idx.length)return null;
+  return{x:idx.reduce((s,i)=>s+P[i].x,0)/idx.length,y:idx.reduce((s,i)=>s+P[i].y,0)/idx.length};
+}
+function drawAnnotations(ctx,P,dpr){
+  const ph=phaseNear(state.cur);if(!ph)return;
+  const items=state.allRules.filter(x=>(x.r.phase||"contact")===ph&&!x.r.timing).slice(0,4);
+  if(ph==="contact")for(const x of state.allRules.filter(x=>x.r.timing==="downswing"))items.push(x);
+  const W=ctx.canvas.width,H=ctx.canvas.height,font=getComputedStyle(document.body).fontFamily;
+  const boxW=230*dpr,boxH=46*dpr,gap=12*dpr;const left=W-boxW-16*dpr;let y=56*dpr;
+  for(const x of items.slice(0,5)){
+    const col=x.sev==="red"?C.red:x.sev==="amber"?C.amber:C.green;
+    const target=x.r.joints?jointPoint(state.cur,P,x.r.joints):null;
+    ctx.save();
+    if(target){ctx.strokeStyle=col;ctx.lineWidth=1*dpr;ctx.globalAlpha=.8;ctx.beginPath();ctx.moveTo(left,y+boxH/2);ctx.lineTo(target.x,target.y);ctx.stroke();ctx.fillStyle=col;ctx.beginPath();ctx.arc(target.x,target.y,3.5*dpr,0,Math.PI*2);ctx.fill();if(x.sev!=="green"){ctx.lineWidth=2*dpr;ctx.beginPath();ctx.arc(target.x,target.y,10*dpr,0,Math.PI*2);ctx.stroke()}}
+    ctx.globalAlpha=1;ctx.fillStyle="rgba(6,17,26,.88)";ctx.strokeStyle=col;ctx.lineWidth=1*dpr;ctx.beginPath();ctx.roundRect(left,y,boxW,boxH,6*dpr);ctx.fill();ctx.stroke();
+    ctx.fillStyle="#9fb6c4";ctx.font=`${11*dpr}px ${font}`;ctx.fillText(`${x.r.label.replace(/（估計）/,"")} · 最佳 ${fmt(x.b,x.r.digits||0)}${x.r.unit}`,left+10*dpr,y+17*dpr);
+    ctx.fillStyle=col;ctx.font=`bold ${13*dpr}px ${font}`;
+    const verdict=x.sev==="green"?"維持得好 ✓":`${sgn(x.d,x.r.digits||0)}${x.r.unit} → 回到 ${fmt(x.b,x.r.digits||0)}${x.r.unit}`;
+    ctx.fillText(`目前 ${fmt(x.c,x.r.digits||0)}${x.r.unit}  ${verdict}`,left+10*dpr,y+36*dpr);
+    ctx.restore();y+=boxH+gap;
+  }
+}
+function drawOverlay(slot){
+  const cv=slot.ov,ctx=cv.getContext("2d"),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+  const f=frameAt(slot,slotT(slot));if(!f?.lm)return;
+  const sc=Math.min(W/slot.w,H/slot.h),dw=slot.w*sc,dh=slot.h*sc,dx=(W-dw)/2,dy=(H-dh)/2;
+  drawImageSkeleton(ctx,f.lm,dx,dy,dw,dh,slot.id==="best"?C.best:C.cur,true);
+}
+function drawImageSkeleton(ctx,lm,dx,dy,dw,dh,color,glow){
+  const P=lm.map(p=>({x:dx+p.x*dw,y:dy+p.y*dh,v:p.v}));const dpr=devicePixelRatio;
+  ctx.save();if(glow){ctx.shadowColor=color;ctx.shadowBlur=8*dpr}ctx.strokeStyle=color;ctx.lineWidth=2.5*dpr;ctx.lineCap="round";
+  for(const [a,b] of BONES){if(P[a].v<.3||P[b].v<.3)continue;ctx.beginPath();ctx.moveTo(P[a].x,P[a].y);ctx.lineTo(P[b].x,P[b].y);ctx.stroke()}
+  ctx.fillStyle=color;for(const j of KEYJ){if(P[j].v<.3)continue;ctx.beginPath();ctx.arc(P[j].x,P[j].y,3*dpr,0,Math.PI*2);ctx.fill()}
+  ctx.restore();
+}
+function drawTimeline(){
+  const cv=$("#tlCanvas"),ctx=cv.getContext("2d"),W=cv.width,H=cv.height;ctx.clearRect(0,0,W,H);
+  const [w0,w1]=state.win,X=t=>40+(t-w0)/(w1-w0)*(W-60);
+  ctx.strokeStyle=C.line;ctx.lineWidth=1;for(let i=1;i<4;i++){ctx.beginPath();ctx.moveTo(40,i*H/4);ctx.lineTo(W-20,i*H/4);ctx.stroke()}
+  ctx.setLineDash([4,4]);ctx.strokeStyle=C.amber;ctx.beginPath();ctx.moveTo(X(0),10);ctx.lineTo(X(0),H-22);ctx.stroke();ctx.setLineDash([]);
+  for(const s of ["best","cur"]){
+    const slot=state[s],col=s==="cur"?C.cur:C.best,c0=slot.frames[slot.ev.contact].t;
+    ctx.fillStyle=s==="cur"?"rgba(255,155,74,.12)":"rgba(57,212,255,.12)";ctx.beginPath();ctx.moveTo(X(w0),H-22);
+    slot.frames.forEach((f,i)=>{const t=f.t-c0;if(t<w0||t>w1)return;ctx.lineTo(X(t),H-22-(slot.series.score[i]||0)*(H*.35))});ctx.lineTo(X(w1),H-22);ctx.fill();
+    line("spineTilt",-40,40,[]);line("shoulderRot",-30,150,[6,4]);
+    function line(k,lo,hi,dash){ctx.strokeStyle=col;ctx.lineWidth=2;ctx.setLineDash(dash);ctx.beginPath();let started=false;slot.frames.forEach(f=>{const t=f.t-c0;if(t<w0||t>w1||!f.m)return;const y=12+(1-(f.m[k]-lo)/(hi-lo))*(H-46);started?ctx.lineTo(X(t),y):ctx.moveTo(X(t),y);started=true});ctx.stroke();ctx.setLineDash([])}
+    for(const k of ["plant","launch"]){const i=slot.ev[k];if(i==null)continue;const t=slot.frames[i].t-c0;ctx.fillStyle=col;ctx.fillRect(X(t)-1,H-30,2,8);ctx.font="10px monospace";ctx.fillText(PH[k],X(t)-10,H-32-(s==="best"?10:0))}
+  }
+  ctx.fillStyle=C.muted;ctx.font="11px monospace";ctx.fillText(`${w0.toFixed(1)}s`,40,H-6);ctx.fillText("擊球 0",X(0)-16,H-6);ctx.fillText(`+${w1.toFixed(1)}s`,W-50,H-6);
+  ctx.fillText("實線 上身側傾(−40..40°)  虛線 轉肩(−30..150°)  填色 動作速度",44,12);
+}
+
+/* ---------- report ---------- */
+$("#dlBtn").addEventListener("click",()=>{
+  const b=state.best,c=state.cur,L=[];
+  L.push("揮棒實驗室-江蘇駿馬隊打擊影片分析","",`最佳影片：${b.file.name}（${b.fps} fps，${b.frames.length} 格，擊球 ${fmtT(b.frames[b.ev.contact].t)}${b.confirmed?"，已確認":"，自動估計"}）`,`目前影片：${c.file.name}（${c.fps} fps，${c.frames.length} 格，擊球 ${fmtT(c.frames[c.ev.contact].t)}${c.confirmed?"，已確認":"，自動估計"}）`,`打者：${c.leadLeft?"右打":"左打"}`,"",$("#lead").textContent,"","再進步的三件事");
+  state.findings.forEach((x,i)=>L.push(`${i+1}. ${x.r.label}：最佳 ${fmt(x.b,x.r.digits||0)}${x.r.unit}，目前 ${fmt(x.c,x.r.digits||0)}${x.r.unit}，差 ${sgn(x.d,x.r.digits||0)}${x.r.unit}`,`   ${x.r.why(x.b,x.c)}`,`   改法：${x.r.fix(x.b,x.c)}`,`   練習：${x.r.drill}`));
+  L.push("","已經做得很好的");state.good.forEach(x=>L.push(`- ${x.r.label}：最佳 ${fmt(x.b,x.r.digits||0)}${x.r.unit}，目前 ${fmt(x.c,x.r.digits||0)}${x.r.unit}`));
+  L.push("","各階段數據（最佳 / 目前）");
+  for(const [k,name,unit] of TABLE_METRICS){L.push(`${name}${unit?`(${unit})`:""}：`+["setup","plant","launch","contact","finish"].map(p=>{const vb=mAt(b,b.ev[p])?.[k],vc=mAt(c,c.ev[p])?.[k];return`${PH[p]} ${fmt(vb)}/${fmt(vc)}`}).join("　"))}
+  L.push("",`時間（秒）：下棒 ${fmt(b.timing.downswing,2)}/${fmt(c.timing.downswing,2)}　著地→擊球 ${fmt(b.timing.plantToContact,2)}/${fmt(c.timing.plantToContact,2)}　擊球→收尾 ${fmt(b.timing.finish,2)}/${fmt(c.timing.finish,2)}`);
+  L.push("","限制：單鏡頭 AI 姿態估計；3D 深度、轉肩轉髖、位移為估計值；模型不追蹤球棒與球，擊球幀需人工確認。");
+  const blob=new Blob([L.join("\n")],{type:"text/plain;charset=utf-8"}),a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`揮棒分析-${new Date().toISOString().slice(0,10)}.txt`;a.click();URL.revokeObjectURL(a.href);
+});
+</script>
+</body>
+</html>
